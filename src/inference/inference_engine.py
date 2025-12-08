@@ -8,6 +8,8 @@ print("Current Device:", torch.cuda.get_device_name(0))
 
 torch.backends.cudnn.benchmark = True
 torch.backends.cuda.matmul.allow_tf32 = True
+from src.utils.logger import VehicleLogger
+from src.utils.emailer import EmailSender
 
 
 import requests
@@ -31,6 +33,13 @@ class InferenceEngine:
         self.model_loader = YOLOModelLoader(model_path=model_path, device="auto")
         self.model = self.model_loader.get_model()
         self.alert_engine = AlertEngine()
+        self.logger = VehicleLogger()
+
+        self.emailer = EmailSender(
+        sender_email="chetanjaysingh500@gmail.com",
+        app_password="jwih jpuq esxf scfp",
+        receiver_email="sahukomendra721@gmail.com"
+        )
 
         print(f"[INFO] Opening camera stream: {stream_url}")
         self.cap = cv2.VideoCapture(stream_url)
@@ -98,6 +107,7 @@ class InferenceEngine:
 
             # Raw detections
             detections_json = self._detections_to_json(results)
+            self.logger.log(detections_json)
 
             # Compute metrics from detections
             vehicle_detections = TrafficMetrics.filter_vehicles(detections_json)
@@ -144,3 +154,9 @@ class InferenceEngine:
 
         self.cap.release()
         cv2.destroyAllWindows()
+        
+        # ✅ AUTOMATIC EMAIL ON STOP
+        self.emailer.send_log("vehicle_log.csv")
+        
+        print("[INFO] CSV email sent. Inference session completed.")
+        
