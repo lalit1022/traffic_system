@@ -46,28 +46,40 @@ class InferenceEngine:
         self.prev_time = now
         return round(fps, 2)
 
-    def _detections_to_json(self, results):
-        detections = []
+    def _detections_to_json(self, results, conf_thresh=0.6):
+      detections = []
+  
+      # Move tensors to GPU (already on GPU but safe)
+      boxes = results.boxes.xyxy.cuda()
+      confs = results.boxes.conf.cuda()
+      clss = results.boxes.cls.cuda()
+  
+      # TRACK IDs (optional but used for accident detection)
+      ids = results.boxes.id.cuda() if results.boxes.id is not None else None
+  
+      for i in range(len(boxes)):
+  
+          conf = float(confs[i].item())
+  
+          # ✅ CONFIDENCE FILTER (YOUR REQUEST)
+          if conf < conf_thresh:
+              continue
+  
+          cls = int(clss[i].item())
+          x1, y1, x2, y2 = map(float, boxes[i].tolist())
+  
+          track_id = int(ids[i].item()) if ids is not None else -1
+  
+          detections.append({
+              "track_id": track_id,
+              "class_id": cls,
+              "class_name": self.model.names[cls],
+              "confidence": round(conf, 3),
+              "bbox": [x1, y1, x2, y2],
+          })
+  
+      return detections
 
-        for box in results.boxes:
-            boxes = results.boxes.xyxy.cuda()
-            confs = results.boxes.conf.cuda()
-            clss = results.boxes.cls.cuda()
-
-            for i in range(len(boxes)):
-                cls = int(clss[i].item())
-                conf = float(confs[i].item())
-                x1, y1, x2, y2 = map(float, boxes[i].tolist())
-
-                detections.append({
-                    "class_id": cls,
-                    "class_name": self.model.names[cls],
-                    "confidence": round(conf, 3),
-                    "bbox": [x1, y1, x2, y2],
-                })
-
-
-        return detections
 
     def run(self, display=True):
         print("[INFO] Starting inference loop... Press Q to exit.")
@@ -81,7 +93,7 @@ class InferenceEngine:
             # YOLO inference
             
 
-            results  = self.model(frame, verbose=False, imgsz=480)[0]
+            results = self.model.track(frame, imgsz=640, half=True, persist=True)[0]
 
 
             # Raw detections
