@@ -37,7 +37,7 @@ class InferenceEngine:
 
         self.emailer = EmailSender(
         sender_email="chetanjaysingh500@gmail.com",
-        app_password="jwih jpuq esxf scfp",
+        app_password="yndq wzax uxou rnyq",
         receiver_email="sahukomendra721@gmail.com"
         )
 
