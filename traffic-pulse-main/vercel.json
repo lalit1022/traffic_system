@@ -2,14 +2,14 @@
   "version": 2,
   "builds": [
     {
-      "src": "traffic-pulse-main/package.json",
+      "src": "package.json",
       "use": "@vercel/static-build",
-      "config": { "distDir": "traffic-pulse-main/dist" }
+      "config": { "distDir": "dist" }
     }
   ],
   "routes": [
     { "src": "/api/(.*)", "dest": "https://api.yourdomain.com/api/$1" },
     { "src": "/socket.io/(.*)", "dest": "https://api.yourdomain.com/socket.io/$1" },
-    { "src": "/(.*)", "dest": "/traffic-pulse-main/index.html" }
+    { "src": "/(.*)", "dest": "/index.html" }
   ]
 }
