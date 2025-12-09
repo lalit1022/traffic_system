@@ -1,3 +1,4 @@
+import React, { useEffect, useRef } from "react";
 import { AlertTriangle, Shield, CarFront, Navigation } from 'lucide-react';
 import { Alerts } from '@/types/traffic';
 import { cn } from '@/lib/utils';
@@ -7,6 +8,43 @@ interface AlertsPanelProps {
 }
 
 export function AlertsPanel({ alerts }: AlertsPanelProps) {
+  const beepRef = useRef<HTMLAudioElement | null>(null);
+
+  useEffect(() => {
+    // initialize audio once
+    if (!beepRef.current) {
+      const audio = new Audio("/beep.mp3"); // file in public/beep.mp3
+      audio.loop = true;
+      audio.preload = "auto";
+      beepRef.current = audio;
+    }
+
+    const audio = beepRef.current;
+
+    if (alerts.accident_alert) {
+      // try to play (may be blocked by autoplay policies)
+      audio
+        .play()
+        .catch((err) => {
+          // Autoplay might be blocked until user interacts — log for debugging
+          // You can optionally show a UI prompt to ask user to "Enable sound"
+          console.warn("beep play blocked:", err);
+        });
+    } else {
+      // stop and reset
+      audio.pause();
+      audio.currentTime = 0;
+    }
+
+    // cleanup when component unmounts
+    return () => {
+      if (audio) {
+        audio.pause();
+        audio.currentTime = 0;
+      }
+    };
+  }, [alerts.accident_alert]);
+
   return (
     <div className="bg-card border border-border rounded-xl p-5">
       <div className="flex items-center gap-2 mb-4">
@@ -17,13 +55,13 @@ export function AlertsPanel({ alerts }: AlertsPanelProps) {
           Real-Time Alerts
         </h3>
       </div>
-      
+
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {/* Congestion Alert */}
         <div className={cn(
           "rounded-lg p-4 transition-all duration-300 border",
-          alerts.congestion_alert 
-            ? "bg-destructive/10 border-destructive/50 glow-destructive" 
+          alerts.congestion_alert
+            ? "bg-destructive/10 border-destructive/50 glow-destructive"
             : "bg-success/10 border-success/30"
         )}>
           <div className="flex items-center gap-3">
@@ -49,12 +87,12 @@ export function AlertsPanel({ alerts }: AlertsPanelProps) {
             </div>
           </div>
         </div>
-        
+
         {/* Accident Alert */}
         <div className={cn(
           "rounded-lg p-4 transition-all duration-300 border",
-          alerts.accident_alert 
-            ? "bg-destructive/10 border-destructive/50 glow-destructive animate-pulse" 
+          alerts.accident_alert
+            ? "bg-destructive/10 border-destructive/50 glow-destructive animate-pulse"
             : "bg-success/10 border-success/30"
         )}>
           <div className="flex items-center gap-3">
@@ -80,12 +118,12 @@ export function AlertsPanel({ alerts }: AlertsPanelProps) {
             </div>
           </div>
         </div>
-        
+
         {/* Wrong-Way Alert */}
         <div className={cn(
           "rounded-lg p-4 transition-all duration-300 border",
-          alerts.wrong_way_alert 
-            ? "bg-warning/10 border-warning/50 glow-warning animate-pulse" 
+          alerts.wrong_way_alert
+            ? "bg-warning/10 border-warning/50 glow-warning animate-pulse"
             : "bg-success/10 border-success/30"
         )}>
           <div className="flex items-center gap-3">
