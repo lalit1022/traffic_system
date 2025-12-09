@@ -22,7 +22,7 @@ export function ErrorState({ message, onRetry }: ErrorStateProps) {
         <div className="bg-card border border-border rounded-lg p-4 text-left mb-6">
           <p className="text-xs text-muted-foreground mb-2">Expected endpoint:</p>
           <code className="text-sm font-mono text-primary">
-            GET http://127.0.0.1:5001/latest
+            GET https://10komu-traffic-camera.hf.space/latest
           </code>
         </div>
         {onRetry && (
